@@ -21,7 +21,7 @@
         .passenger-chip:active { cursor: grabbing; }
         .sortable-ghost { opacity: 0.3; background: #99f6e4 !important; border-radius: 0.5rem; }
         .sortable-chosen { box-shadow: 0 8px 24px rgba(0,0,0,0.2); transform: rotate(2deg) scale(1.05); }
-        .car-board { min-height: 64px; transition: background 0.2s; border-radius: 0.5rem; }
+        .car-board { min-height: 80px; transition: background 0.2s; border-radius: 0.5rem; border: 1px dashed #e5e7eb; }
         .capacity-bar { height: 6px; border-radius: 9999px; background: #e5e7eb; overflow: hidden; }
         .capacity-fill { height: 100%; border-radius: 9999px; transition: width 0.3s, background-color 0.3s; }
         .car-container.over-capacity { border-color: #ef4444 !important; }
@@ -62,7 +62,7 @@
     <div class="tab-bar flex border-b border-gray-200 mb-6 no-print">
         <button class="tab-btn active px-5 py-3 text-sm" data-tab="main">🚗 配車する</button>
         <button class="tab-btn px-5 py-3 text-sm" data-tab="members">👥 メンバー</button>
-        <button class="tab-btn px-5 py-3 text-sm" data-tab="drivers">🔑 ドライバー</button>
+        <button class="tab-btn px-5 py-3 text-sm" data-tab="drivers">🔑 配車設定</button>
     </div>
 
     <!-- 配車タブ -->
@@ -79,7 +79,7 @@
         <div id="step-2" class="card no-print">
             <h2 class="font-bold text-lg mb-4 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full border-2 border-teal-600 text-teal-600 flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
-                今日の車を選ぶ
+                配車の車を選ぶ
             </h2>
             <div id="driver-select-list" class="space-y-2"></div>
         </div>
@@ -141,19 +141,20 @@
         </div>
     </div>
 
-    <!-- ドライバータブ -->
+    <!-- 配車タブ -->
     <div id="tab-drivers" class="tab-content">
         <div class="card">
-            <h2 class="font-bold text-lg mb-4">🔑 ドライバー一覧</h2>
+            <h2 class="font-bold text-lg mb-4">🔑 配車一覧</h2>
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b bg-slate-50 text-left text-xs text-gray-500 uppercase">
-                        <th class="py-2 px-3">名前</th>
-                        <th class="py-2 px-3">デフォルト定員</th>
+                        <th class="py-2 px-3">配車名</th>
+                        <th class="py-2 px-3">合計定員</th>
                         <th class="py-2 px-3 text-center">操作</th>
                     </tr>
                 </thead>
                 <tbody id="drivers-tbody"></tbody>
+                <tfoot id="drivers-tfoot"></tfoot>
             </table>
         </div>
     </div>
@@ -162,7 +163,7 @@
 
 <!-- モーダル -->
 <div id="modal-overlay">
-    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+    <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-sm mx-4">
         <h3 id="modal-title" class="font-bold text-lg mb-4"></h3>
         <div id="modal-body" class="space-y-3"></div>
         <div class="flex gap-3 mt-6">
@@ -174,22 +175,22 @@
 
 <script>
 // ===== デフォルトデータ =====
-const DEFAULT_MEMBERS = [
-    { name: "バスケ太郎", area: "サンプルエリア" }
-];
-const DEFAULT_DRIVERS = [
-    { name: "バスケ太郎", defaultCapacity: 4 }
-];
+const DEFAULT_MEMBERS = [{ name: "バスケ太郎", area: "サンプルエリア" }];
+const DEFAULT_DRIVERS = [{ name: "バスケ太郎の車", defaultCapacity: 4 }];
 
 // ===== データ管理 =====
-const DATA_VERSION = 'v3';
+const DATA_VERSION = 'v8'; 
 
 function loadData() {
     try {
         if (localStorage.getItem('haicha_version') !== DATA_VERSION) {
-            localStorage.clear();
+            const oldMembers = JSON.parse(localStorage.getItem('haicha_members'));
+            const oldDrivers = JSON.parse(localStorage.getItem('haicha_drivers'));
             localStorage.setItem('haicha_version', DATA_VERSION);
-            return { members: DEFAULT_MEMBERS, drivers: DEFAULT_DRIVERS };
+            return {
+                members: oldMembers || DEFAULT_MEMBERS,
+                drivers: oldDrivers || DEFAULT_DRIVERS
+            };
         }
         return {
             members: JSON.parse(localStorage.getItem('haicha_members')) || DEFAULT_MEMBERS,
@@ -253,9 +254,6 @@ function closeModal() {
     modalOkCallback = null;
 }
 document.getElementById('modal-cancel').addEventListener('click', closeModal);
-document.getElementById('modal-overlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('modal-overlay')) closeModal();
-});
 document.getElementById('modal-ok').addEventListener('click', () => {
     if (modalOkCallback) modalOkCallback();
 });
@@ -301,11 +299,11 @@ function renderDriverSelect() {
     const el = document.getElementById('driver-select-list');
     el.innerHTML = appData.drivers.map(d =>
         '<div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50">' +
-        '<input type="checkbox" id="drv-' + d.name + '" name="driver" value="' + d.name + '" class="h-5 w-5 rounded text-teal-600 flex-shrink-0">' +
-        '<label for="drv-' + d.name + '" class="font-semibold flex-1 cursor-pointer">' + d.name + '</label>' +
+        '<input type="checkbox" id="drv-sel-' + d.name + '" name="driver" value="' + d.name + '" class="h-5 w-5 rounded text-teal-600 flex-shrink-0">' +
+        '<label for="drv-sel-' + d.name + '" class="font-semibold flex-1 cursor-pointer">' + d.name + '</label>' +
         '<div class="flex items-center gap-1 text-sm text-gray-500">' +
         '<span>定員</span>' +
-        '<input type="number" name="cap" data-driver="' + d.name + '" value="' + d.defaultCapacity + '" min="1" max="15"' +
+        '<input type="number" name="cap" data-driver="' + d.name + '" value="' + d.defaultCapacity + '" min="1" max="15" ' +
         ' class="w-16 p-1 border rounded-md text-center font-bold text-gray-700" disabled>' +
         '<span>人</span>' +
         '</div></div>'
@@ -321,45 +319,56 @@ function renderDriverSelect() {
 document.getElementById('startBoardBtn').addEventListener('click', () => {
     const participants = Array.from(document.querySelectorAll('input[name="attendance"]:checked')).map(cb => cb.value);
     if (participants.length === 0) { showMessage('参加者を選んでください。', 'error'); return; }
-    const selectedDrivers = [];
-    let err = null;
+    const selectedHaichas = [];
     document.querySelectorAll('input[name="driver"]:checked').forEach(cb => {
         const cap = parseInt(document.querySelector('input[name="cap"][data-driver="' + cb.value + '"]').value, 10);
-        if (isNaN(cap) || cap < 1) { err = cb.value; return; }
-        selectedDrivers.push({ name: cb.value, capacity: cap });
+        selectedHaichas.push({ name: cb.value, capacity: cap });
     });
-    if (err) { showMessage('「' + err + '」の定員を確認してください。', 'error'); return; }
-    if (selectedDrivers.length === 0) { showMessage('今日の車を選んでください。', 'error'); return; }
-    buildBoard(participants, selectedDrivers);
+    if (selectedHaichas.length === 0) { showMessage('配車の車を選んでください。', 'error'); return; }
+    buildBoard(participants, selectedHaichas);
 });
 
 // ===== 配車ボード =====
-function buildBoard(participants, drivers) {
+function buildBoard(participants, haichas) {
     rebuildAreaColors();
     const memberMap = {};
     appData.members.forEach(m => { memberMap[m.name] = m; });
 
-    const driverNames = new Set(drivers.map(d => d.name));
-    const waiting = participants.filter(name => !driverNames.has(name));
+    // 初期配置の判定ロジック
+    const assignedNames = new Set();
+    const haichaAssignments = {}; // carName -> [memberNames]
+
+    haichas.forEach(car => {
+        haichaAssignments[car.name] = [];
+        // 「名前＋の車」が一致する参加者がいれば、その車に初期配置
+        participants.forEach(pName => {
+            if (car.name === pName + "の車") {
+                haichaAssignments[car.name].push(pName);
+                assignedNames.add(pName);
+            }
+        });
+    });
+
+    const waiting = participants.filter(name => !assignedNames.has(name));
 
     const carsGrid = document.getElementById('cars-grid');
-    carsGrid.innerHTML = drivers.map(driver => {
-        const member = memberMap[driver.name] || { name: driver.name, area: '' };
-        return '<div class="car-container card !p-0 overflow-hidden border-2 border-transparent transition-all" data-driver="' + driver.name + '">' +
+    carsGrid.innerHTML = haichas.map(car => {
+        const initialChips = haichaAssignments[car.name].map(name => makeChipHtml(memberMap[name] || { name: name, area: '' })).join('');
+        return '<div class="car-container card !p-0 overflow-hidden border-2 border-transparent transition-all" data-driver="' + car.name + '">' +
             '<div class="car-header bg-slate-50 px-4 py-3 border-b flex items-center justify-between">' +
-            '<span class="font-bold">🚙 ' + driver.name + ' の車</span>' +
-            '<div class="text-sm text-gray-500"><span class="passenger-count font-bold text-gray-700">1</span><span> / ' + driver.capacity + '人</span></div>' +
+            '<span class="font-bold">🚙 ' + car.name + '</span>' +
+            '<div class="text-sm text-gray-500"><span class="passenger-count font-bold text-gray-700">0</span><span> / ' + car.capacity + '人</span></div>' +
             '</div>' +
-            '<div class="capacity-bar mx-4 mt-2"><div class="capacity-fill" style="width:' + Math.min(100, 100/driver.capacity) + '%"></div></div>' +
-            '<div class="car-board p-3 flex flex-wrap gap-2 bg-white" data-driver="' + driver.name + '" data-capacity="' + driver.capacity + '">' +
-            makeChipHtml(member) +
+            '<div class="capacity-bar mx-4 mt-2"><div class="capacity-fill" style="width:0%"></div></div>' +
+            '<div class="car-board p-3 flex flex-wrap gap-2 bg-white" data-driver="' + car.name + '" data-capacity="' + car.capacity + '">' +
+            initialChips +
             '</div></div>';
     }).join('');
 
     const waitingArea = document.getElementById('waiting-area');
     waitingArea.innerHTML = waiting.map(name => makeChipHtml(memberMap[name] || { name: name, area: '' })).join('');
 
-    document.getElementById('board-summary').textContent = drivers.length + '台 / 参加 ' + participants.length + '人';
+    document.getElementById('board-summary').textContent = haichas.length + '台 / 参加 ' + participants.length + '人';
 
     const absentees = appData.members.filter(m => !participants.includes(m.name));
     const absentSection = document.getElementById('absent-section');
@@ -384,8 +393,7 @@ function buildBoard(participants, drivers) {
 
     document.getElementById('copyBtn').onclick = copyResults;
     document.getElementById('printBtn').onclick = () => {
-        document.getElementById('print-date').textContent =
-            new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
+        document.getElementById('print-date').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
         window.print();
     };
 }
@@ -403,10 +411,11 @@ function updateBoard() {
         const cap = parseInt(board.dataset.capacity, 10);
         const count = board.children.length;
         const pct = Math.min(100, count / cap * 100);
+        
         container.querySelector('.passenger-count').textContent = count;
         const fill = container.querySelector('.capacity-fill');
         fill.style.width = pct + '%';
-        fill.style.backgroundColor = pct > 100 ? '#ef4444' : pct >= 80 ? '#f59e0b' : '#10b981';
+        fill.style.backgroundColor = count > cap ? '#ef4444' : count >= cap ? '#f59e0b' : '#10b981';
         container.classList.toggle('over-capacity', count > cap);
     });
     const waitingArea = document.getElementById('waiting-area');
@@ -417,7 +426,7 @@ function copyResults() {
     const carBoards = document.querySelectorAll('.car-board');
     let text = '【配車結果】\n\n';
     carBoards.forEach(board => {
-        text += '🚙 ' + board.dataset.driver + ' の車 (' + board.children.length + '/' + board.dataset.capacity + '人)\n';
+        text += '🚙 ' + board.dataset.driver + ' (' + board.children.length + '/' + board.dataset.capacity + '人)\n';
         board.querySelectorAll('.passenger-chip').forEach(chip => { text += '  ・' + chip.dataset.name + '\n'; });
         text += '\n';
     });
@@ -431,118 +440,68 @@ function copyResults() {
     const ta = document.createElement('textarea');
     ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); showMessage('コピーしました！', 'success'); }
-    catch(e) { showMessage('コピーに失敗しました。', 'error'); }
+    document.execCommand('copy'); 
+    showMessage('コピーしました！', 'success');
     document.body.removeChild(ta);
 }
 
 // ===== メンバー管理 =====
 function addMember(name, area) {
-    if (!name) return false;
-    if (appData.members.find(m => m.name === name)) return false;
+    if (!name || appData.members.find(m => m.name === name)) return false;
     appData.members.push({ name: name, area: area || '' });
-    if (!appData.drivers.find(d => d.name === name)) {
-        appData.drivers.push({ name: name, defaultCapacity: 4 });
+    
+    // メンバー追加時に「配車」を自動生成
+    const carName = name + "の車";
+    if (!appData.drivers.find(d => d.name === carName)) {
+        appData.drivers.push({ name: carName, defaultCapacity: 4, autoGenerated: true });
     }
+    
     return true;
 }
 
 function renderMembersTab() {
     rebuildAreaColors();
-
-    const areas = [...new Set(appData.members.map(x => x.area).filter(Boolean))].sort();
-    const legend = document.getElementById('area-legend');
-    legend.innerHTML = areas.length > 0
-        ? areas.map(a => '<span class="' + getAreaColor(a) + ' px-3 py-1 rounded-full text-xs font-bold">' + a + '</span>').join('')
-        : '<span class="text-xs text-gray-400">エリアが登録されていません</span>';
-
     const tbody = document.getElementById('members-tbody');
     tbody.innerHTML = appData.members.map((m, i) =>
         '<tr class="border-b hover:bg-slate-50 transition-colors">' +
         '<td class="py-2 px-3 font-medium">' + m.name + '</td>' +
-        '<td class="py-2 px-3">' +
-        (m.area ? '<span class="' + getAreaColor(m.area) + ' px-2 py-0.5 rounded-full text-xs font-bold">' + m.area + '</span>'
-                : '<span class="text-gray-400 text-xs">未設定</span>') +
-        '</td>' +
+        '<td class="py-2 px-3">' + (m.area ? '<span class="' + getAreaColor(m.area) + ' px-2 py-0.5 rounded-full text-xs font-bold">' + m.area + '</span>' : '<span class="text-gray-400 text-xs">未設定</span>') + '</td>' +
         '<td class="py-2 px-3 text-center">' +
         '<button class="text-teal-600 text-xs font-semibold hover:underline mr-2" onclick="editMember(' + i + ')">編集</button>' +
         '<button class="text-red-400 text-xs font-semibold hover:underline" onclick="deleteMember(' + i + ')">削除</button>' +
         '</td></tr>'
     ).join('');
 
-    // 末尾インライン入力行
-    const datalist = areas.map(a => '<option value="' + a + '">').join('');
     const tfoot = document.getElementById('members-tfoot');
-    tfoot.innerHTML =
-        '<tr class="bg-teal-50">' +
-        '<td class="py-2 px-2"><input id="inline-name" type="text" placeholder="＋ 名前を入力"' +
-        ' class="w-full p-1.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"></td>' +
-        '<td class="py-2 px-2"><input id="inline-area" type="text" placeholder="エリア（省略可）" list="inline-area-list"' +
-        ' class="w-full p-1.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white">' +
-        '<datalist id="inline-area-list">' + datalist + '</datalist></td>' +
-        '<td class="py-2 px-2 text-center"><button id="inline-add-btn"' +
-        ' class="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-teal-700">追加</button></td>' +
+    tfoot.innerHTML = '<tr class="bg-teal-50">' +
+        '<td class="py-2 px-2"><input id="mem-inline-name" type="text" placeholder="＋ 名前を入力" class="w-full p-1.5 border border-teal-200 rounded-lg text-sm bg-white"></td>' +
+        '<td class="py-2 px-2"><input id="mem-inline-area" type="text" placeholder="エリア" class="w-full p-1.5 border border-teal-200 rounded-lg text-sm bg-white"></td>' +
+        '<td class="py-2 px-2 text-center"><button id="mem-inline-add-btn" class="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">追加</button></td>' +
         '</tr>';
-
-    document.getElementById('inline-name').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); document.getElementById('inline-area').focus(); }
-    });
-    document.getElementById('inline-area').addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); inlineAddMember(); }
-    });
-    document.getElementById('inline-add-btn').addEventListener('click', inlineAddMember);
+    document.getElementById('mem-inline-add-btn').onclick = inlineAddMember;
 }
 
 function inlineAddMember() {
-    const nameInput = document.getElementById('inline-name');
-    const areaInput = document.getElementById('inline-area');
-    const name = nameInput.value.trim();
-    const area = areaInput.value.trim();
-    if (!name) { nameInput.focus(); return; }
-    if (!addMember(name, area)) {
-        showMessage('「' + name + '」は既に登録されています。', 'error');
-        return;
+    const name = document.getElementById('mem-inline-name').value.trim();
+    const area = document.getElementById('mem-inline-area').value.trim();
+    if (addMember(name, area)) {
+        saveData(); renderMembersTab(); showMessage('追加しました', 'success');
     }
-    saveData();
-    renderMembersTab();
-    showMessage('「' + name + '」を追加しました。', 'success');
-    setTimeout(() => { const el = document.getElementById('inline-name'); if (el) el.focus(); }, 50);
 }
 
 window.editMember = function(i) {
     const m = appData.members[i];
-    const areas = [...new Set(appData.members.map(x => x.area).filter(Boolean))].sort();
-    const datalist = areas.map(a => '<option value="' + a + '">').join('');
-    openModal('メンバーを編集',
-        '<div><label class="text-xs font-bold text-gray-500 uppercase">名前</label>' +
-        '<input id="mf-name" type="text" value="' + m.name + '"' +
-        ' class="w-full mt-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"></div>' +
-        '<div><label class="text-xs font-bold text-gray-500 uppercase">エリア</label>' +
-        '<input id="mf-area" type="text" value="' + (m.area || '') + '" placeholder="例: 志井南" list="mf-area-list"' +
-        ' class="w-full mt-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">' +
-        '<datalist id="mf-area-list">' + datalist + '</datalist></div>',
-        function() {
-            const name = document.getElementById('mf-name').value.trim();
-            const area = document.getElementById('mf-area').value.trim();
-            if (!name) { showMessage('名前を入力してください。', 'error'); return; }
-            const di = appData.drivers.findIndex(d => d.name === appData.members[i].name);
-            appData.members[i] = { name: name, area: area };
-            if (di >= 0) appData.drivers[di].name = name;
-            saveData();
-            closeModal();
-            renderMembersTab();
-        }
-    );
+    openModal('編集', '<div>名前</div><input id="mf-name" value="'+m.name+'" class="w-full border p-2 mb-2"><div>エリア</div><input id="mf-area" value="'+(m.area||'')+'" class="w-full border p-2">', () => {
+        appData.members[i] = { name: document.getElementById('mf-name').value, area: document.getElementById('mf-area').value };
+        saveData(); closeModal(); renderMembersTab();
+    });
 };
 
 window.deleteMember = function(i) {
-    if (!confirm('「' + appData.members[i].name + '」を削除しますか？')) return;
-    appData.members.splice(i, 1);
-    saveData();
-    renderMembersTab();
+    if (confirm('削除しますか？')) { appData.members.splice(i, 1); saveData(); renderMembersTab(); }
 };
 
-// ===== ドライバー管理 =====
+// ===== 配車設定 =====
 function renderDriversTab() {
     const tbody = document.getElementById('drivers-tbody');
     tbody.innerHTML = appData.drivers.map((d, i) =>
@@ -554,34 +513,43 @@ function renderDriversTab() {
         '<button class="text-red-400 text-xs font-semibold hover:underline" onclick="deleteDriver(' + i + ')">削除</button>' +
         '</td></tr>'
     ).join('');
+
+    const tfoot = document.getElementById('drivers-tfoot');
+    tfoot.innerHTML = '<tr class="bg-teal-50">' +
+        '<td class="py-2 px-2"><input id="drv-inline-name" type="text" placeholder="＋ 車名を入力" class="w-full p-1.5 border border-teal-200 rounded-lg text-sm bg-white"></td>' +
+        '<td class="py-2 px-2 text-center"><input id="drv-inline-cap" type="number" value="4" class="w-16 p-1.5 border border-teal-200 rounded-lg text-sm bg-white text-center">人</td>' +
+        '<td class="py-2 px-2 text-center"><button id="drv-inline-add-btn" class="bg-teal-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">追加</button></td>' +
+        '</tr>';
+    document.getElementById('drv-inline-add-btn').onclick = inlineAddDriver;
+}
+
+function inlineAddDriver() {
+    const name = document.getElementById('drv-inline-name').value.trim();
+    const cap = parseInt(document.getElementById('drv-inline-cap').value, 10) || 4;
+    if (name && !appData.drivers.find(d => d.name === name)) {
+        appData.drivers.push({ name, defaultCapacity: cap });
+        saveData(); renderDriversTab(); showMessage('追加しました', 'success');
+    }
 }
 
 window.editDriver = function(i) {
     const d = appData.drivers[i];
-    openModal('ドライバーを編集',
-        '<div><label class="text-xs font-bold text-gray-500 uppercase">名前</label>' +
-        '<input id="df-name" type="text" value="' + d.name + '"' +
-        ' class="w-full mt-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"></div>' +
-        '<div><label class="text-xs font-bold text-gray-500 uppercase">デフォルト定員</label>' +
-        '<input id="df-cap" type="number" value="' + d.defaultCapacity + '" min="1" max="15"' +
-        ' class="w-full mt-1 p-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"></div>',
-        function() {
-            const name = document.getElementById('df-name').value.trim();
-            const cap = parseInt(document.getElementById('df-cap').value, 10);
-            if (!name) { showMessage('名前を入力してください。', 'error'); return; }
-            appData.drivers[i] = { name: name, defaultCapacity: cap || 4 };
-            saveData();
-            closeModal();
-            renderDriversTab();
+    const isAuto = d.autoGenerated || d.name.endsWith("の車");
+    openModal('配車編集', 
+        '<div>名前 ' + (isAuto ? '(自動生成のため変更不可)' : '') + '</div>' +
+        '<input id="df-name" value="' + d.name + '" ' + (isAuto ? 'readonly class="w-full border p-2 mb-2 bg-gray-100 cursor-not-allowed"' : 'class="w-full border p-2 mb-2"') + '>' +
+        '<div>定員</div><input id="df-cap" type="number" value="' + d.defaultCapacity + '" class="w-full border p-2">', 
+        () => {
+            const newName = document.getElementById('df-name').value;
+            const newCap = parseInt(document.getElementById('df-cap').value, 10);
+            appData.drivers[i] = { ...d, name: newName, defaultCapacity: newCap };
+            saveData(); closeModal(); renderDriversTab();
         }
     );
 };
 
 window.deleteDriver = function(i) {
-    if (!confirm('「' + appData.drivers[i].name + '」を削除しますか？')) return;
-    appData.drivers.splice(i, 1);
-    saveData();
-    renderDriversTab();
+    if (confirm('削除しますか？')) { appData.drivers.splice(i, 1); saveData(); renderDriversTab(); }
 };
 
 // ===== 起動 =====
