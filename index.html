@@ -65,7 +65,6 @@
         <button class="tab-btn px-5 py-3 text-sm" data-tab="drivers">🔑 配車設定</button>
     </div>
 
-    <!-- 配車タブ -->
     <div id="tab-main" class="tab-content active">
         <div id="step-1" class="card no-print">
             <h2 class="font-bold text-lg mb-4 flex items-center gap-2">
@@ -122,7 +121,6 @@
         </div>
     </div>
 
-    <!-- メンバータブ -->
     <div id="tab-members" class="tab-content">
         <div class="card">
             <h2 class="font-bold text-lg mb-4">👥 メンバー一覧</h2>
@@ -141,7 +139,6 @@
         </div>
     </div>
 
-    <!-- 配車タブ -->
     <div id="tab-drivers" class="tab-content">
         <div class="card">
             <h2 class="font-bold text-lg mb-4">🔑 配車一覧</h2>
@@ -161,7 +158,6 @@
 
 </div>
 
-<!-- モーダル -->
 <div id="modal-overlay">
     <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-sm mx-4">
         <h3 id="modal-title" class="font-bold text-lg mb-4"></h3>
@@ -422,7 +418,16 @@ function updateBoard() {
     document.getElementById('waiting-area-wrapper').classList.toggle('has-passengers', waitingArea.children.length > 0);
 }
 
+// コピー機能（未配車チェック付き）
 function copyResults() {
+    const waiting = document.getElementById('waiting-area');
+    
+    // 追加: 未配車の人がいる場合はアラートを出して中断
+    if (waiting && waiting.children.length > 0) {
+        showMessage('未配車の人がいます。全員を配車してからコピーしてください。', 'error');
+        return;
+    }
+
     const carBoards = document.querySelectorAll('.car-board');
     let text = '【配車結果】\n\n';
     carBoards.forEach(board => {
@@ -430,13 +435,10 @@ function copyResults() {
         board.querySelectorAll('.passenger-chip').forEach(chip => { text += '  ・' + chip.dataset.name + '\n'; });
         text += '\n';
     });
-    const waiting = document.getElementById('waiting-area');
-    if (waiting.children.length > 0) {
-        text += '⚠️ 未配車\n';
-        waiting.querySelectorAll('.passenger-chip').forEach(chip => { text += '  ・' + chip.dataset.name + '\n'; });
-    }
+    
     const absent = document.getElementById('absent-names').textContent;
     if (absent) text += '\n欠席: ' + absent;
+
     const ta = document.createElement('textarea');
     ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
     document.body.appendChild(ta); ta.select();
