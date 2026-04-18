@@ -54,8 +54,8 @@
 
     <div class="tab-bar flex border-b border-gray-200 mb-6">
         <button class="tab-btn active px-5 py-3 text-sm" data-tab="main">🚗 配車する</button>
-        <button class="tab-btn px-5 py-3 text-sm" data-tab="members">👥 メンバー</button>
-        <button class="tab-btn px-5 py-3 text-sm" data-tab="drivers">🔑 配車設定</button>
+        <button class="tab-btn px-5 py-3 text-sm" data-tab="members">👥 メンバー登録</button>
+        <button class="tab-btn px-5 py-3 text-sm" data-tab="drivers">🔑 配車登録</button>
         <button class="tab-btn px-5 py-3 text-sm" data-tab="manual">📖 使い方</button>
     </div>
 
@@ -114,7 +114,7 @@
     <!-- メンバータブ -->
     <div id="tab-members" class="tab-content">
         <div class="card">
-            <h2 class="font-bold text-lg mb-4">👥 メンバー一覧</h2>
+            <h2 class="font-bold text-lg mb-4">👥 メンバー登録一覧</h2>
             <div id="area-legend" class="flex flex-wrap gap-2 mb-4 p-3 bg-slate-50 rounded-lg"></div>
             <table class="w-full text-sm">
                 <thead>
@@ -133,7 +133,7 @@
     <!-- 配車設定タブ -->
     <div id="tab-drivers" class="tab-content">
         <div class="card">
-            <h2 class="font-bold text-lg mb-4">🔑 配車一覧</h2>
+            <h2 class="font-bold text-lg mb-4">🔑 配車登録一覧</h2>
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b bg-slate-50 text-left text-xs text-gray-500 uppercase">
@@ -157,8 +157,8 @@
                 <section>
                     <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-teal-500 pl-3">1. メンバー・車の登録</h3>
                     <ul class="list-disc list-inside text-gray-600 space-y-1 ml-2">
-                        <li><strong>メンバー管理</strong>：「👥 メンバー」タブで名前とエリアを登録。エリアごとにチップが色分けされます。</li>
-                        <li><strong>配車設定</strong>：「🔑 配車設定」タブで車名と定員を設定。メンバー登録時に「〇〇の車」が自動作成されます。</li>
+                        <li><strong>メンバー登録</strong>：「👥 メンバー登録」タブで名前とエリアを登録。エリアごとにチップが色分けされます。</li>
+                        <li><strong>配車登録</strong>：「🔑 配車登録」タブで車名と定員を設定。メンバー登録時に「〇〇の車」が自動作成されます。</li>
                     </ul>
                 </section>
 
@@ -205,8 +205,8 @@
 
 <script>
 // ===== デフォルトデータ =====
-const DEFAULT_MEMBERS = [{ name: "バスケ太郎", area: "サンプルエリア" }];
-const DEFAULT_DRIVERS = [{ name: "バスケ太郎の車", defaultCapacity: 4 }];
+const DEFAULT_MEMBERS = [];
+const DEFAULT_DRIVERS = [];
 
 // ===== データ管理 =====
 const DATA_VERSION = 'v8'; 
