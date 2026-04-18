@@ -31,14 +31,7 @@
         #waiting-area-wrapper.has-passengers #waiting-warning { display: block; }
         #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 100; align-items: center; justify-content: center; }
         #modal-overlay.open { display: flex; }
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; }
-            .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
-            #tab-main { display: block !important; }
-            .tab-content { display: block !important; }
-            #step-1, #step-2, .tab-bar { display: none !important; }
-        }
+        
         .area-chip-0 { background: #fee2e2; color: #991b1b; }
         .area-chip-1 { background: #fef3c7; color: #92400e; }
         .area-chip-2 { background: #d1fae5; color: #065f46; }
@@ -55,18 +48,20 @@
 
 <div class="max-w-5xl mx-auto px-4 py-6">
 
-    <header class="flex items-center justify-between mb-6 no-print">
+    <header class="flex items-center justify-between mb-6">
         <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">🏀 配車ツクール</h1>
     </header>
 
-    <div class="tab-bar flex border-b border-gray-200 mb-6 no-print">
+    <div class="tab-bar flex border-b border-gray-200 mb-6">
         <button class="tab-btn active px-5 py-3 text-sm" data-tab="main">🚗 配車する</button>
         <button class="tab-btn px-5 py-3 text-sm" data-tab="members">👥 メンバー</button>
         <button class="tab-btn px-5 py-3 text-sm" data-tab="drivers">🔑 配車設定</button>
+        <button class="tab-btn px-5 py-3 text-sm" data-tab="manual">📖 使い方</button>
     </div>
 
+    <!-- メインタブ -->
     <div id="tab-main" class="tab-content active">
-        <div id="step-1" class="card no-print">
+        <div id="step-1" class="card">
             <h2 class="font-bold text-lg mb-4 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full border-2 border-teal-600 text-teal-600 flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
                 出欠を確認する
@@ -75,7 +70,7 @@
             <div id="attendance-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-56 overflow-y-auto p-1"></div>
         </div>
 
-        <div id="step-2" class="card no-print">
+        <div id="step-2" class="card">
             <h2 class="font-bold text-lg mb-4 flex items-center gap-2">
                 <span class="w-7 h-7 rounded-full border-2 border-teal-600 text-teal-600 flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
                 配車の車を選ぶ
@@ -83,28 +78,23 @@
             <div id="driver-select-list" class="space-y-2"></div>
         </div>
 
-        <div class="text-center my-6 no-print">
+        <div class="text-center my-6">
             <button id="startBoardBtn" class="bg-gradient-to-r from-teal-500 to-teal-700 hover:from-teal-600 hover:to-teal-800 text-white font-bold py-4 px-12 rounded-xl shadow-lg text-lg transition-all hover:-translate-y-0.5 hover:shadow-xl">
                 配車ボードを開く
             </button>
         </div>
 
-        <div id="message-box" class="hidden p-3 rounded-lg text-center text-sm my-3 no-print"></div>
+        <div id="message-box" class="hidden p-3 rounded-lg text-center text-sm my-3"></div>
 
         <div id="board-section" class="hidden">
-            <div class="hidden print:block mb-4">
-                <h2 class="text-xl font-bold">【配車結果】</h2>
-                <p id="print-date" class="text-sm text-gray-600"></p>
-            </div>
-            <div class="flex items-center justify-between mb-3 no-print">
+            <div class="flex items-center justify-between mb-3">
                 <h2 class="font-bold text-lg flex items-center gap-2">
                     <span class="w-7 h-7 rounded-full border-2 border-teal-600 text-teal-600 flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
                     配車ボード
                     <span id="board-summary" class="text-sm font-normal text-gray-500 ml-2"></span>
                 </h2>
                 <div class="flex gap-2">
-                    <button id="copyBtn" class="no-print bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm">📋 コピー</button>
-                    <button id="printBtn" class="no-print bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm">🖨️ 印刷</button>
+                    <button id="copyBtn" class="bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-50 text-sm">📋 コピー</button>
                 </div>
             </div>
             <div id="cars-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4"></div>
@@ -121,6 +111,7 @@
         </div>
     </div>
 
+    <!-- メンバータブ -->
     <div id="tab-members" class="tab-content">
         <div class="card">
             <h2 class="font-bold text-lg mb-4">👥 メンバー一覧</h2>
@@ -139,6 +130,7 @@
         </div>
     </div>
 
+    <!-- 配車設定タブ -->
     <div id="tab-drivers" class="tab-content">
         <div class="card">
             <h2 class="font-bold text-lg mb-4">🔑 配車一覧</h2>
@@ -153,6 +145,48 @@
                 <tbody id="drivers-tbody"></tbody>
                 <tfoot id="drivers-tfoot"></tfoot>
             </table>
+        </div>
+    </div>
+
+    <!-- 使い方タブ -->
+    <div id="tab-manual" class="tab-content">
+        <div class="card prose prose-teal max-w-none">
+            <h2 class="font-bold text-xl mb-6 flex items-center gap-2 text-teal-800">📖 利用マニュアル</h2>
+            
+            <div class="space-y-8">
+                <section>
+                    <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-teal-500 pl-3">1. メンバー・車の登録</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1 ml-2">
+                        <li><strong>メンバー管理</strong>：「👥 メンバー」タブで名前とエリアを登録。エリアごとにチップが色分けされます。</li>
+                        <li><strong>配車設定</strong>：「🔑 配車設定」タブで車名と定員を設定。メンバー登録時に「〇〇の車」が自動作成されます。</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-teal-500 pl-3">2. 参加者と車の選択</h3>
+                    <p class="text-gray-600 ml-2 mb-2">「🚗 配車する」タブで以下を確定させます。</p>
+                    <ol class="list-decimal list-inside text-gray-600 space-y-1 ml-2">
+                        <li><strong>出欠確認</strong>：参加メンバーにチェック。</li>
+                        <li><strong>使用する車</strong>：出す車にチェック。定員はその場でも変更可能です。</li>
+                    </ol>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-teal-500 pl-3">3. 配車ボードでの調整</h3>
+                    <p class="text-gray-600 ml-2 mb-2">「配車ボードを開く」から操作画面へ。</p>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1 ml-2">
+                        <li><strong>配置</strong>：メンバーを各車へドラッグして移動。</li>
+                        <li><strong>視覚判定</strong>：定員超過は赤、満員はオレンジで表示。チップの色を参考に、エリアが近い人をまとめると効率的です。</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3 class="font-bold text-lg text-gray-800 mb-2 border-l-4 border-teal-500 pl-3">4. 結果の共有</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1 ml-2">
+                        <li><strong>📋 コピー</strong>：ボタンを押し、そのままLINEに貼り付けて送信してください。</li>
+                    </ul>
+                </section>
+            </div>
         </div>
     </div>
 
@@ -259,7 +293,7 @@ function showMessage(msg, type) {
     const box = document.getElementById('message-box');
     if (!box) return;
     box.textContent = msg;
-    box.className = 'p-3 rounded-lg text-center text-sm my-3 no-print ' +
+    box.className = 'p-3 rounded-lg text-center text-sm my-3 ' +
         (type === 'success' ? 'bg-teal-100 text-teal-800' : 'bg-red-100 text-red-800');
     box.classList.remove('hidden');
     clearTimeout(box._timer);
@@ -330,13 +364,11 @@ function buildBoard(participants, haichas) {
     const memberMap = {};
     appData.members.forEach(m => { memberMap[m.name] = m; });
 
-    // 初期配置の判定ロジック
     const assignedNames = new Set();
-    const haichaAssignments = {}; // carName -> [memberNames]
+    const haichaAssignments = {};
 
     haichas.forEach(car => {
         haichaAssignments[car.name] = [];
-        // 「名前＋の車」が一致する参加者がいれば、その車に初期配置
         participants.forEach(pName => {
             if (car.name === pName + "の車") {
                 haichaAssignments[car.name].push(pName);
@@ -388,10 +420,6 @@ function buildBoard(participants, haichas) {
     updateBoard();
 
     document.getElementById('copyBtn').onclick = copyResults;
-    document.getElementById('printBtn').onclick = () => {
-        document.getElementById('print-date').textContent = new Date().toLocaleDateString('ja-JP', { year:'numeric', month:'long', day:'numeric', weekday:'short' });
-        window.print();
-    };
 }
 
 function makeChipHtml(member) {
@@ -418,11 +446,8 @@ function updateBoard() {
     document.getElementById('waiting-area-wrapper').classList.toggle('has-passengers', waitingArea.children.length > 0);
 }
 
-// コピー機能（未配車チェック付き）
 function copyResults() {
     const waiting = document.getElementById('waiting-area');
-    
-    // 追加: 未配車の人がいる場合はアラートを出して中断
     if (waiting && waiting.children.length > 0) {
         showMessage('未配車の人がいます。全員を配車してからコピーしてください。', 'error');
         return;
@@ -452,12 +477,10 @@ function addMember(name, area) {
     if (!name || appData.members.find(m => m.name === name)) return false;
     appData.members.push({ name: name, area: area || '' });
     
-    // メンバー追加時に「配車」を自動生成
     const carName = name + "の車";
     if (!appData.drivers.find(d => d.name === carName)) {
         appData.drivers.push({ name: carName, defaultCapacity: 4, autoGenerated: true });
     }
-    
     return true;
 }
 
